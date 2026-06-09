@@ -93,6 +93,113 @@ public class main {
         Librarian librarian = new Librarian("L001", "Mrs. Smith");
         System.out.println("=== Welcome, " + librarian.getName() + "! ===\n");
 
+        // ── MIDTERM FEATURE DEMO ──────────────────────────────────────────────
+        System.out.println("============================================");
+        System.out.println("          MIDTERM FEATURE DEMO             ");
+        System.out.println("============================================");
+
+        // ── Feature 1: Fine System ────────────────────────────────────────────
+        System.out.println("\n--- Feature 1: Fine System ---");
+        Member demoBudi1 = new Member("D001", "Budi");
+        Books laskarPelangi = new Books("D-A1", "Laskar Pelangi", "Andrea Hirata", "Fiction");
+        // Budi borrows the book on day 1
+        try {
+            demoBudi1.borrowItem(laskarPelangi);
+        } catch (ItemNotAvailableException | BorrowLimitExceededException e) {
+            System.out.println("  Error: " + e.getMessage());
+        }
+        // Create a borrow record with day-number date (required by issueFine)
+        BorrowRecord fineRecord = new BorrowRecord("REC-FINE", demoBudi1, laskarPelangi, "1");
+        // Return on day 12 → daysLate = 12 - (1 + 7) = 4 → Rp8000
+        try {
+            Fine fine = librarian.issueFine(fineRecord, 12);
+            System.out.println(fine.getInfo());
+        } catch (InvalidFineException e) {
+            System.out.println("  Error: " + e.getMessage());
+        }
+
+        // ── Feature 2: Premium Member ─────────────────────────────────────────
+        System.out.println("\n--- Feature 2: Premium Member ---");
+        Member budi = new Member("D002", "Budi");
+        PremiumMember sari = new PremiumMember("D003", "Sari", "PREM001");
+
+        // Books for Budi (regular — limit 3, trying 4)
+        Books[] budiBooks = {
+            new Books("D-B1", "Laskar Pelangi",  "Andrea Hirata",    "Fiction"),
+            new Books("D-B2", "Dilan",            "Pidi Baiq",        "Fiction"),
+            new Books("D-B3", "Bumi Manusia",     "Pramoedya A.T.",   "Historical"),
+            new Books("D-B4", "Negeri 5 Menara",  "Ahmad Fuadi",      "Fiction")
+        };
+        for (Books book : budiBooks) {
+            try {
+                budi.borrowItem(book);
+            } catch (BorrowLimitExceededException e) {
+                System.out.println("[Regular] Borrow limit reached. Maximum 3 items for regular members.");
+            }
+        }
+
+        // Books for Sari (premium — limit 5, trying 6)
+        Books[] sariBooks = {
+            new Books("D-C1", "Filosofi Kopi",   "Dee Lestari",  "Fiction"),
+            new Books("D-C2", "Pulang",           "Tere Liye",    "Fiction"),
+            new Books("D-C3", "Hujan",            "Tere Liye",    "Fiction"),
+            new Books("D-C4", "Perahu Kertas",    "Dee Lestari",  "Romance"),
+            new Books("D-C5", "Supernova",        "Dee Lestari",  "Sci-Fi"),
+            new Books("D-C6", "Ranah 3 Warna",   "Ahmad Fuadi",  "Fiction")
+        };
+        for (Books book : sariBooks) {
+            try {
+                sari.borrowItem(book);
+            } catch (BorrowLimitExceededException e) {
+                System.out.println("[Premium] Borrow limit reached. Maximum 5 items for premium members.");
+            }
+        }
+
+        // ── Feature 3: Reservation System ────────────────────────────────────
+        System.out.println("\n--- Feature 3: Reservation System ---");
+        Books dilanBook = new Books("D-D1", "Dilan", "Pidi Baiq", "Fiction");
+        dilanBook.setAvailable(false); // simulate that this item is already borrowed
+        Member demoSari = new Member("D004", "Sari");
+        librarian.addReservation(demoSari, dilanBook);
+        librarian.displayAllReservations();
+
+        // ── Feature 4: Search by Genre / Type ────────────────────────────────
+        System.out.println("\n--- Feature 4: Search by Genre / Type ---");
+        // searchByGenre(Books[], int, String) — searches books by genre
+        librarian.searchByGenre(librarian.getCatalog(), librarian.getCatalogCount(), "Fiction");
+        System.out.println();
+        // searchByGenre(Multimedia[], int, String) — same method name, different parameter type
+        librarian.searchByGenre(librarian.getMultimedia(), librarian.getMultimediaCount(), "DVD");
+
+        // ── Bonus: Exception Handling ─────────────────────────────────────────
+        System.out.println("\n--- Bonus: Exception Handling ---");
+        // Scenario 1: borrow an unavailable item
+        Books unavailable = new Books("D-E1", "Dilan", "Pidi Baiq", "Fiction");
+        unavailable.setAvailable(false);
+        Member testMember = new Member("D005", "Budi");
+        try {
+            testMember.borrowItem(unavailable);
+        } catch (ItemNotAvailableException e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+        // Scenario 2: exceed borrow limit
+        Books ex1 = new Books("D-F1", "Book A", "Author", "Fiction");
+        Books ex2 = new Books("D-F2", "Book B", "Author", "Fiction");
+        Books ex3 = new Books("D-F3", "Book C", "Author", "Fiction");
+        Books ex4 = new Books("D-F4", "Book D", "Author", "Fiction");
+        try {
+            testMember.borrowItem(ex1);
+            testMember.borrowItem(ex2);
+            testMember.borrowItem(ex3);
+            testMember.borrowItem(ex4); // triggers BorrowLimitExceededException
+        } catch (BorrowLimitExceededException e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+
+        System.out.println("\n============================================");
+        System.out.println("          END OF DEMO                      ");
+        System.out.println("============================================\n");
+
         // mainChoice stores which section the user picks from the main menu
         // Start at -1 so the while loop begins immediately (since -1 != 0)
         int mainChoice = -1;
@@ -452,10 +559,13 @@ public class main {
                                     if (itemToBorrow == null) {
                                         System.out.println("  [FAILED] Item not found.");
                                     } else {
-                                        // borrowItem() is in Member — works for any LibraryItem
-                                        if (borrower.borrowItem(itemToBorrow)) {
-                                            // Only log the record if the borrow was successful
-                                            librarian.recordBorrow(borrower, itemToBorrow);
+                                        // borrowItem() throws if item unavailable or limit exceeded
+                                        try {
+                                            if (borrower.borrowItem(itemToBorrow)) {
+                                                librarian.recordBorrow(borrower, itemToBorrow);
+                                            }
+                                        } catch (ItemNotAvailableException | BorrowLimitExceededException e) {
+                                            System.out.println("  Error: " + e.getMessage());
                                         }
                                     }
                                 }
