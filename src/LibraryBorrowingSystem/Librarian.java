@@ -65,11 +65,21 @@ public class Librarian extends Person {
     // recordCount tracks how many borrow records have been created
     private int recordCount;
 
+    // reservations stores all active and cancelled reservations (Feature 3)
+    private Reservation[] reservations;
+
+    // reservationCount tracks how many reservations have been created
+    private int reservationCount;
+
+    // fineCount is used to generate unique fine IDs (Feature 1)
+    private int fineCount;
+
     // Maximum sizes for each array
-    private static final int MAX_BOOKS      = 100;
-    private static final int MAX_MULTIMEDIA = 50;
-    private static final int MAX_MEMBERS    = 50;
-    private static final int MAX_RECORDS    = 200;
+    private static final int MAX_BOOKS         = 100;
+    private static final int MAX_MULTIMEDIA    = 50;
+    private static final int MAX_MEMBERS       = 50;
+    private static final int MAX_RECORDS       = 200;
+    private static final int MAX_RESERVATIONS  = 100;
 
     /**
      * Creates a new Librarian and automatically loads initial data
@@ -98,6 +108,13 @@ public class Librarian extends Person {
         // Initialize the borrow records array with MAX_RECORDS empty slots
         this.borrowRecords = new BorrowRecord[MAX_RECORDS];
         this.recordCount = 0;
+
+        // Initialize the reservations array (Feature 3)
+        this.reservations = new Reservation[MAX_RESERVATIONS];
+        this.reservationCount = 0;
+
+        // Fine ID counter starts at 0 (Feature 1)
+        this.fineCount = 0;
 
         // Load all initial data from each class
         loadInitialData();
@@ -625,6 +642,124 @@ public class Librarian extends Person {
         return catalogCount + multimediaCount;
     }
 
+    // ── Feature 1: Fine System ────────────────────────────────────────────────
+
+    /**
+     * Issues a fine for a late return based on a BorrowRecord.
+     * The borrow date stored in the record must be a numeric day number (e.g., "1", "8").
+     * Due date is borrowDay + 7. daysLate = returnDay - dueDay.
+     * Throws InvalidFineException if the item was not actually late (daysLate <= 0).
+     *
+     * @param record    the BorrowRecord for the item being returned
+     * @param returnDay the day number on which the item was returned
+     * @return a Fine object with the calculated amount
+     */
+    public Fine issueFine(BorrowRecord record, int returnDay) {
+        int borrowDay = Integer.parseInt(record.getBorrowDate());
+        int dueDay    = borrowDay + 7;
+        int daysLate  = returnDay - dueDay;
+
+        if (daysLate <= 0) {
+            throw new InvalidFineException(
+                    "No fine: item was returned on time (daysLate = " + daysLate + ").");
+        }
+
+        String fineId = "FINE" + String.format("%03d", ++fineCount);
+        return new Fine(fineId, record.getMember(), record.getItem(), daysLate);
+    }
+
+    // ── Feature 3: Reservation System ────────────────────────────────────────
+
+    /**
+     * Creates a reservation for a member who wants an unavailable item.
+     * Returns null if the reservation array is full.
+     *
+     * @param member the member placing the reservation
+     * @param item   the LibraryItem to reserve
+     * @return the created Reservation object, or null if the array is full
+     */
+    public Reservation addReservation(Member member, LibraryItem item) {
+        if (reservationCount >= MAX_RESERVATIONS) {
+            System.out.println("  [FAILED] Reservation limit reached.");
+            return null;
+        }
+        String resId   = "RES" + String.format("%03d", reservationCount + 1);
+        String resDate = "Day-" + (reservationCount + 1);
+        Reservation res = new Reservation(resId, member, item, resDate);
+        reservations[reservationCount++] = res;
+        return res;
+    }
+
+    /** Prints all active reservations managed by this librarian. */
+    public void displayAllReservations() {
+        System.out.println("  ---- Active Reservations (" + reservationCount + " total) ----");
+        boolean hasActive = false;
+        for (int i = 0; i < reservationCount; i++) {
+            if (reservations[i].isActive()) {
+                System.out.println("  " + reservations[i].getInfo());
+                hasActive = true;
+            }
+        }
+        if (!hasActive) {
+            System.out.println("  (no active reservations)");
+        }
+    }
+
+    // ── Feature 4: Search by Genre / Type (overloaded) ───────────────────────
+
+    /**
+     * OVERLOADED METHOD — searches the books catalog by genre.
+     * Prints all books whose genre matches (case-insensitive).
+     * Prints "No items found for: [genre]" if none match.
+     *
+     * @param catalog the Books array to search
+     * @param size    number of valid entries in catalog
+     * @param genre   genre keyword to match (e.g. "Fiction")
+     */
+    public void searchByGenre(Books[] catalog, int size, String genre) {
+        System.out.println("Search results for genre: " + genre);
+        boolean found = false;
+        for (int i = 0; i < size; i++) {
+            if (catalog[i] != null
+                    && catalog[i].getGenre().equalsIgnoreCase(genre)) {
+                System.out.println("- " + catalog[i].getTitle()
+                        + " | Author: " + catalog[i].getAuthor()
+                        + " | Available: " + catalog[i].isAvailable());
+                found = true;
+            }
+        }
+        if (!found) {
+            System.out.println("No items found for: " + genre);
+        }
+    }
+
+    /**
+     * OVERLOADED METHOD — searches the multimedia catalog by type.
+     * Same method name as above — demonstrates method overloading.
+     * Prints all multimedia items whose type matches (case-insensitive).
+     * Prints "No items found for: [type]" if none match.
+     *
+     * @param catalog the Multimedia array to search
+     * @param size    number of valid entries in catalog
+     * @param type    type keyword to match (e.g. "DVD")
+     */
+    public void searchByGenre(Multimedia[] catalog, int size, String type) {
+        System.out.println("Search results for type: " + type);
+        boolean found = false;
+        for (int i = 0; i < size; i++) {
+            if (catalog[i] != null
+                    && catalog[i].getType().equalsIgnoreCase(type)) {
+                System.out.println("- " + catalog[i].getTitle()
+                        + " | Type: " + catalog[i].getType()
+                        + " | Available: " + catalog[i].isAvailable());
+                found = true;
+            }
+        }
+        if (!found) {
+            System.out.println("No items found for: " + type);
+        }
+    }
+
     /**
      * Returns a detailed description of this librarian.
      * OVERRIDES the base getInfo() in Person with librarian-specific details.
@@ -675,4 +810,10 @@ public class Librarian extends Person {
 
     /** Returns the total number of borrow records logged. */
     public int getRecordCount() { return recordCount; }
+
+    /** Returns the reservations array. */
+    public Reservation[] getReservations() { return reservations; }
+
+    /** Returns the total number of reservations created. */
+    public int getReservationCount() { return reservationCount; }
 }

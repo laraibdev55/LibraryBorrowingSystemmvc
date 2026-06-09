@@ -34,17 +34,22 @@ package LibraryBorrowingSystem;
 public class Member extends Person {
 
     // borrowedItems holds all LibraryItems (Books or Multimedia) this member currently has
-    // It is typed as LibraryItem so it can hold both Books and Multimedia objects
-    // This is an association: Member -> LibraryItem[]
-    private LibraryItem[] borrowedItems;
+    // protected so PremiumMember can directly add/remove items without re-implementing the array
+    protected LibraryItem[] borrowedItems;
 
     // borrowCount tracks how many items this member is currently borrowing
-    private int borrowCount;
+    // protected so PremiumMember can read and increment it in its overridden borrowItem()
+    protected int borrowCount;
 
-    // MAX_BORROW is a constant — a member can borrow at most 5 items at once
-    // static means it belongs to the class, not any single object
-    // final means this value cannot be changed after it is set
+    // MAX_BORROW is the physical array capacity — enough for any member tier (premium max = 5)
     private static final int MAX_BORROW = 5;
+
+    /**
+     * Returns the maximum number of items this member tier can borrow at once.
+     * Regular members are limited to 3. PremiumMember overrides this to return 5.
+     * Called inside borrowItem() so the limit is always tier-appropriate.
+     */
+    protected int getBorrowLimit() { return 3; }
 
     /**
      * Creates a new Member with the given ID and name.
@@ -86,36 +91,36 @@ public class Member extends Person {
 
     /**
      * Borrows a library item (Book or Multimedia) for this member.
-     * Fails if the item is already borrowed by someone else,
-     * or if this member has reached the maximum borrow limit.
+     * Regular members are limited to 3 items (getBorrowLimit() returns 3).
+     * PremiumMember overrides this method for a limit of 5.
+     *
+     * Throws ItemNotAvailableException if the item is currently borrowed by someone else.
+     * Throws BorrowLimitExceededException if this member has reached their tier limit.
      *
      * @param item the LibraryItem to borrow (can be a Books or Multimedia object)
-     * @return true if the borrow was successful, false otherwise
+     * @return true if the borrow was successful
      */
     public boolean borrowItem(LibraryItem item) {
-        // Check if the item is available — if not, reject the request
+        // If the item is not on the shelf, throw — caller handles the error
         if (!item.isAvailable()) {
-            System.out.println("  [FAILED] \"" + item.getTitle() + "\" is currently not available.");
-            return false; // Stop here and report failure
+            throw new ItemNotAvailableException(
+                    "Item '" + item.getTitle() + "' is currently not available for borrowing.");
         }
 
-        // Check if this member has already reached their borrowing limit
-        if (borrowCount >= MAX_BORROW) {
-            System.out.println("  [FAILED] " + name + " has reached the borrow limit (" + MAX_BORROW + ").");
-            return false; // Stop here and report failure
+        // If this member is at their tier limit, throw — caller handles the error
+        if (borrowCount >= getBorrowLimit()) {
+            throw new BorrowLimitExceededException(
+                    name + " has reached the maximum borrow limit of " + getBorrowLimit() + " items.");
         }
 
         // Add the item to the member's borrowedItems array at the next open slot
-        // borrowCount++ places the item at index borrowCount, then increases borrowCount by 1
         borrowedItems[borrowCount++] = item;
 
         // Mark the item as no longer available in the system
         item.setAvailable(false);
 
-        // Confirm the successful borrow to the console
-        System.out.println("  [SUCCESS] " + name + " borrowed \"" + item.getTitle() + "\".");
-
-        // Return true to indicate the borrow was successful
+        // Confirm the successful borrow
+        System.out.println("[Regular] " + name + " borrowed: " + item.getTitle());
         return true;
     }
 
