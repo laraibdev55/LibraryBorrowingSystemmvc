@@ -7,7 +7,9 @@
  * @email       mas.john.cook@gmail.com
  * @status      None
  */
-package LibraryBorrowingSystem;
+package LibraryBorrowingSystem.model;
+
+import LibraryBorrowingSystem.LibraryItem;
 
 /**
  * Represents a book in the library collection.

@@ -7,7 +7,10 @@
  * @email       mas.john.cook@gmail.com
  * @status      None
  */
-package LibraryBorrowingSystem;
+package LibraryBorrowingSystem.controller;
+
+import LibraryBorrowingSystem.LibraryItem;
+import LibraryBorrowingSystem.Member;
 
 /**
  * Represents a single borrow transaction in the library system.

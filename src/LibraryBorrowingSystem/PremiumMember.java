@@ -1,5 +1,7 @@
 package LibraryBorrowingSystem;
 
+import LibraryBorrowingSystem.modal.ItemNotAvailableException;
+
 /**
  * Represents a premium-tier library member with an extended borrow limit.
  *

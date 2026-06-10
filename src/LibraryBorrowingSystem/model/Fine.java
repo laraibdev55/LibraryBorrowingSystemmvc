@@ -1,4 +1,7 @@
-package LibraryBorrowingSystem;
+package LibraryBorrowingSystem.model;
+
+import LibraryBorrowingSystem.LibraryItem;
+import LibraryBorrowingSystem.Member;
 
 /**
  * Represents a late-return fine issued against a member.

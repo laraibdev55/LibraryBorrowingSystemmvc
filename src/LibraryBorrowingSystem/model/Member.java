@@ -9,6 +9,9 @@
  */
 package LibraryBorrowingSystem;
 
+import LibraryBorrowingSystem.modal.ItemNotAvailableException;
+import LibraryBorrowingSystem.modal.Person;
+
 /**
  * Represents a library member who can borrow, return, and search for items.
  * Inherits from Person — gains id and name.

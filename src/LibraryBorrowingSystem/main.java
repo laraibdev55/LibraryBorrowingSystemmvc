@@ -16,6 +16,12 @@ package LibraryBorrowingSystem;
 // Import the Scanner class from java.util so we can read keyboard input
 import java.util.Scanner;
 
+import LibraryBorrowingSystem.controller.BorrowRecord;
+import LibraryBorrowingSystem.modal.ItemNotAvailableException;
+import LibraryBorrowingSystem.modal.Librarian;
+import LibraryBorrowingSystem.model.Books;
+import LibraryBorrowingSystem.model.Fine;
+
 /**
  * Entry point for the Library Borrowing System.
  *

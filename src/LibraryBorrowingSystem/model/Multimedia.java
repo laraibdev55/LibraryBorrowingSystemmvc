@@ -7,7 +7,7 @@
  * @email       mas.john.cook@gmail.com
  * @status      None
  */
-package LibraryBorrowingSystem;
+package LibraryBorrowingSystem.model;
 
 /**
  * Represents a multimedia item in the library collection.
